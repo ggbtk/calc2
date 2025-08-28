@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>모바일 상품권 계산기</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --card: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #22c55e;
+      --accent-2: #60a5fa;
+      --ring: rgba(96,165,250,0.45);
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; background: linear-gradient(180deg, #0b0f14, #0f172a); color: var(--text); }
+    .wrap { max-width: 540px; margin: 0 auto; padding: 24px 16px 48px; }
+    .title { font-size: 22px; font-weight: 800; line-height: 1.2; letter-spacing: -0.02em; }
+    .subtitle { color: var(--muted); margin-top: 6px; font-size: 13px; }
+    .card { margin-top: 18px; background: linear-gradient(180deg, #0f172a, #0b1220); border: 1px solid rgba(255,255,255,0.06); border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
+    label { display:block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .input, select { width: 100%; padding: 14px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: #0b1220; color: var(--text); font-size: 16px; outline: none; transition: box-shadow .2s, border-color .2s; -webkit-appearance: none; }
+    .input:focus, select:focus { border-color: var(--accent-2); box-shadow: 0 0 0 6px var(--ring); }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .grid { display:grid; grid-template-columns: 1fr; gap: 12px; }
+    .btns { display:flex; gap:8px; flex-wrap: wrap; margin-top: 8px; }
+    .chip { padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.1); color: var(--text); background: #0b1220; font-size: 13px; cursor: pointer; }
+    .chip.active { background: var(--accent-2); border-color: var(--accent-2); color: #061019; font-weight: 700; }
+    .out { margin-top: 12px; border-radius: 14px; padding: 14px; background: linear-gradient(180deg, #0b1220, #0a101b); border: 1px solid rgba(255,255,255,0.07); }
+    .out h3 { margin: 0 0 10px; font-size: 15px; color: var(--muted); font-weight: 600; }
+    .row2 { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .metric { padding: 12px; border-radius: 12px; background:#0b1220; border:1px solid rgba(255,255,255,0.06); }
+    .metric .k { font-size: 12px; color: var(--muted); }
+    .metric .v { margin-top: 4px; font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+    .footer { margin-top: 18px; font-size: 12px; color: var(--muted); text-align: center; }
+    .accent { color: var(--accent); }
+    .note { margin-top: 10px; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="title">모바일 상품권 계산기</div>
+    <div class="subtitle">예약금과 할인율(예: 80%·90%)을 넣으면 액면가/총대금/잔금을 자동 계산합니다. <span class="accent">잔금 10% 동시이행</span> 구조.</div>
+
+    <div class="card grid">
+      <div>
+        <label>예약금 (원)</label>
+        <input id="deposit" class="input" type="tel" inputmode="numeric" placeholder="예: 360,000" />
+        <div class="hint">숫자만 입력해도 됩니다. 자동으로 쉼표 표기.</div>
+      </div>
+
+      <div>
+        <label>총 거래 할인율(%)</label>
+        <div class="btns" aria-label="할인율 빠른 선택">
+          <button class="chip" data-rate="80">80%</button>
+          <button class="chip" data-rate="85">85%</button>
+          <button class="chip" data-rate="90">90%</button>
+          <button class="chip" data-rate="">직접입력</button>
+        </div>
+        <input id="rate" class="input" type="tel" inputmode="numeric" placeholder="예: 80" style="margin-top:8px" />
+        <div class="hint">총 매매대금 = 액면가 × (할인율%). 예: 80 = 액면가의 80%.</div>
+      </div>
+
+      <div>
+        <label>잔금 비율(고정)</label>
+        <input class="input" value="10% (동시이행)" disabled />
+        <div class="hint">예약금 90% + 잔금 10% 구조로 계산됩니다.</div>
+      </div>
+
+      <div class="out">
+        <h3>결과</h3>
+        <div class="row2">
+          <div class="metric">
+            <div class="k">상품권 액면가</div>
+            <div class="v" id="face">-</div>
+          </div>
+          <div class="metric">
+            <div class="k">총 매매대금</div>
+            <div class="v" id="total">-</div>
+          </div>
+          <div class="metric">
+            <div class="k">잔금 (10%)</div>
+            <div class="v" id="balance">-</div>
+          </div>
+          <div class="metric">
+            <div class="k">예약금 비율</div>
+            <div class="v" id="depPct">-</div>
+          </div>
+        </div>
+        <div class="note">공식: 액면가 = 예약금 / (할인율×0.9). 총대금 = 액면가×할인율. 잔금 = 총대금×0.1</div>
+      </div>
+    </div>
+
+    <div class="footer">iPhone Safari 전용 최적화 • 오프라인 저장 가능(공유 ▶ '홈 화면에 추가')</div>
+  </div>
+
+  <script>
+    const won = new Intl.NumberFormat('ko-KR');
+
+    const depEl = document.getElementById('deposit');
+    const rateEl = document.getElementById('rate');
+    const chips = document.querySelectorAll('.chip');
+
+    const faceEl = document.getElementById('face');
+    const totalEl = document.getElementById('total');
+    const balEl = document.getElementById('balance');
+    const depPctEl = document.getElementById('depPct');
+
+    function parseNum(v){
+      if(!v) return 0;
+      return Number(String(v).replace(/[^0-9.]/g, '')) || 0;
+    }
+
+    function setActive(rate){
+      chips.forEach(c=>{
+        if(!c.dataset.rate) { c.classList.toggle('active', false); return; }
+        c.classList.toggle('active', Number(c.dataset.rate) === rate);
+      });
+    }
+
+    function formatKRW(n){
+      if(!isFinite(n) || n <= 0) return '-';
+      return won.format(Math.round(n)) + '원';
+    }
+
+    function calc(){
+      const deposit = parseNum(depEl.value);
+      const rate = parseNum(rateEl.value); // 80, 85, 90
+
+      if(deposit <= 0 || rate <= 0){
+        faceEl.textContent = '-';
+        totalEl.textContent = '-';
+        balEl.textContent = '-';
+        depPctEl.textContent = '-';
+        return;
+      }
+
+      const discount = rate / 100; // 0.8
+      const face = deposit / (discount * 0.9);
+      const total = face * discount;
+      const balance = total * 0.1;
+      const depPct = total > 0 ? (deposit / total) * 100 : 0;
+
+      faceEl.textContent = formatKRW(face);
+      totalEl.textContent = formatKRW(total);
+      balEl.textContent = formatKRW(balance);
+      depPctEl.textContent = depPct.toFixed(1) + '%';
+    }
+
+    depEl.addEventListener('input', (e)=>{
+      const pos = e.target.selectionStart;
+      const n = parseNum(e.target.value);
+      e.target.value = n ? won.format(n) : '';
+      e.target.setSelectionRange(e.target.value.length, e.target.value.length);
+      calc();
+    });
+
+    rateEl.addEventListener('input', calc);
+
+    chips.forEach(ch => ch.addEventListener('click', ()=>{
+      const r = ch.dataset.rate ? Number(ch.dataset.rate) : null;
+      if(r){
+        rateEl.value = String(r);
+        setActive(r);
+      } else {
+        // 직접입력 모드
+        setActive(-1);
+        rateEl.focus();
+        rateEl.select();
+      }
+      calc();
+    }));
+
+    // 기본값 예시
+    depEl.value = won.format(360000);
+    rateEl.value = '80';
+    setActive(80);
+    calc();
+  </script>
+</body>
+</html>
